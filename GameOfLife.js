@@ -7,9 +7,9 @@ export default class GameOfLife {
     this.#container = params && params.container ? params.container : "";
 
     this.sketch = function (p) {
-      const rows = 400;
-      const cols = 400;
-      const size = 40;
+      const rows = 500;
+      const cols = 500;
+      const size = 25;
       let grid = new Grid(
         p,
         Math.floor(rows / size),
@@ -19,19 +19,19 @@ export default class GameOfLife {
 
       p.setup = function () {
         p.createCanvas(cols, rows);
-       // p.noLoop();
+        // p.noLoop();
         //p.background("cyan");
         grid.init();
       };
 
       p.draw = function () {
-        grid.show();
+        grid.update();
       };
 
       p.mousePressed = function () {
         var index = grid.selectCell(p.mouseX, p.mouseY);
-       // p.redraw();
-        console.log(index)
+        // p.redraw();
+        if(index >= 0) grid.selectNeighbors(index);
       };
     };
   }

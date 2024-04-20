@@ -12,41 +12,29 @@ export default class Grid {
     this.mult_select = true;
     this.cells = Array();
     this.current_cell = Array();
-    this.need_update = false;
-    this.need_full_update = true;
 
-    for (var y = 0; y < this.g_height; y++) {
-      for (var x = 0; x < this.g_width; x++) {
-        this.cells.push(
-          new Tile(p, {
-            pos_i: x,
-            pos_j: y,
-            size: this.scl,
-           // border_width: [0.6, 0.6, 0.6, 0.6],
-            border_color: ["gray", "gray", "gray", "gray"],
-            //vertex_width: [0, 0, 0, 0],
-            vertex_color: ["black", "black", "black", "black"],
-            color: "blue",
-            color_select: "orange",
-          })
-        );
-      }
-    }
+    this.tileConfig = (x, y) => ({
+      pos_i: x,
+      pos_j: y,
+      size: this.scl,
+      // border_width: [0.6, 0.6, 0.6, 0.6],
+      border_color: ["gray", "gray", "gray", "gray"],
+      //vertex_width: [0, 0, 0, 0],
+      vertex_color: ["black", "black", "black", "black"],
+      color: "blue",
+      color_select: "orange",
+    });
   }
 
   init() {
-    //ESTE CÓDIGO FICOU COM 46 FPS
-    this.cells.forEach((element) => {
-      element.show();
-    });
+    this.#fillGrid();
+    this.#displayItems(this.cells);
   }
 
-  show() {
+  update() {
     //this.logFPS && this.calcFPS();
 
-    this.current_cell.forEach((element) => {
-      element.show();
-    });
+    this.#displayItems(this.current_cell);
 
     // Using filter that creates another array and reasign to the same variable name
     //this.current_cell = this.current_cell.filter((element) => element.selected === true);
@@ -57,32 +45,6 @@ export default class Grid {
         this.current_cell.splice(i, 1);
       }
     }
-
-    //console.log(this.current_cell.length);
-
-    /* 
- ESTE FICOU COM 40 FPS
-
-this.cells.map((element) => element.show())
- 
-*/
-
-    /* 
-   ESTE CÓDIGO FICOU COM 46 FPS 
-
-    this.cells.forEach(element => {
-      element.show();
-    }); 
-
-/*     
-
-ESTE CÓDIGO FICOU COM 46 PFS
-for (var i = 0; i < this.cells.length; i++) {
-
-
-      var cell = this.cells[i];
-      cell.show();
-    } */
   }
   selectCell(mx, my) {
     const p = this.p;
@@ -104,31 +66,11 @@ for (var i = 0; i < this.cells.length; i++) {
         });
 
         if (!found) {
-          
           this.cells[index].select(true);
-          this.current_cell.push(this.cells[index]);
-
-          index = x + (y+1) * this.g_width;
-          this.cells[index].select(true);
-          this.cells[index].cor("red")          
-          this.current_cell.push(this.cells[index]);
-
-          index = x+1 + (y+1) * this.g_width;
-          this.cells[index].select(true);
-          this.cells[index].cor("red")          
-          this.current_cell.push(this.cells[index]);
-          index = x-1 + (y+1) * this.g_width;
-          this.cells[index].select(true);
-          this.cells[index].cor("red")          
           this.current_cell.push(this.cells[index]);
         }
- 
-        console.log(`X: ${x}, Y: ${y}, index: ${index}`)
-        let line = Math.floor(index/this.g_width)
-        let row = index - (line*this.g_width);
-        console.log(`row: ${row}, line: ${line}`) 
-        return index;
 
+        return index;
       }
     }
   }
@@ -137,28 +79,66 @@ for (var i = 0; i < this.cells.length; i++) {
     const p = this.p;
     let found = false;
 
-        //cell inside canvas
+    //cell inside canvas
 
-        this.current_cell.forEach((element) => {
-          this.mult_select === false && element.select(false);
-          if (element === this.cells[index]) {
-            found = true;
-            element.select(false);
-          }
-        });
+    this.current_cell.forEach((element) => {
+      this.mult_select === false && element.select(false);
+      if (element === this.cells[index]) {
+        found = true;
+        element.select(false);
+      }
+    });
 
-        if (!found) {
-          this.cells[index].select(true);
-          this.current_cell.push(this.cells[index]);
-        }
-
-           
-    
+    if (!found) {
+      this.cells[index].select(true);
+      this.current_cell.push(this.cells[index]);
+    }
   }
 
-  selectNeighbors(index){
-    let line = Math.floor(index/this.g_width)
-    let row = index - (line*this.g_width);
+  selectNeighbors(index) {
+    let row = Math.floor(index / this.g_width);
+    let col = index % this.g_width;
+
+    for (let yOffset = -1; yOffset <= 1; yOffset++) {
+      let new_y = this.#wrapY(row + yOffset);
+      for (let xOffset = -1; xOffset <= 1; xOffset++) {
+        let new_x = this.#wrapX(col + xOffset);
+
+        let neighborsIndex = new_x + new_y * this.g_width;
+        if (neighborsIndex !== index) {
+          this.selectByIndex(neighborsIndex);
+        }
+      }
+    }
+  }
+
+  #wrapX(x) {
+    return (x + this.g_width) % this.g_width;
+    // my code vs the Copilot optimized code
+    /*     let result = x;
+    if (x < 0) {
+      result = this.g_width + x;
+    } else if (x >= this.g_width) {
+      result = x - this.g_width;
+    }
+
+    return result; */
+  }
+
+  #wrapY(y) {
+    return (y + this.g_height) % this.g_height;
+  }
+
+  #displayItems(itemsCollection) {
+    itemsCollection.forEach((item) => item.show());
+  }
+
+  #fillGrid() {
+    for (let y = 0; y < this.g_height; y++) {
+      for (let x = 0; x < this.g_width; x++) {
+        this.cells.push(new Tile(this.p, this.tileConfig(x, y)));
+      }
+    }
   }
 
   calcFPS() {
