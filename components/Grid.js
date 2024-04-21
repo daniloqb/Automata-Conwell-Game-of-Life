@@ -26,7 +26,7 @@ export default class Grid {
     });
   }
 
-  init() {
+  initGrid() {
     this.#fillGrid();
     this.#displayItems(this.cells);
   }

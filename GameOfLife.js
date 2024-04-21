@@ -21,7 +21,7 @@ export default class GameOfLife {
         p.createCanvas(cols, rows);
         // p.noLoop();
         //p.background("cyan");
-        grid.init();
+        grid.initGrid();
       };
 
       p.draw = function () {
