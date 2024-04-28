@@ -11,9 +11,10 @@ export default class Grid {
     this.lastFrameTime = performance.now();
     this.mult_select = true;
     this.cells = Array();
-    this.current_cell = Array();
+    this.current_cell = new Set();
 
-    this.tileConfig = (x, y) => ({
+    this.tileConfig = (x, y, index) => ({
+      index: index,
       pos_i: x,
       pos_j: y,
       size: this.scl,
@@ -31,84 +32,55 @@ export default class Grid {
     this.#displayItems(this.cells);
   }
 
-  update() {
+  updateGrid() {
     //this.logFPS && this.calcFPS();
-
     this.#displayItems(this.current_cell);
-
-    // Using filter that creates another array and reasign to the same variable name
-    //this.current_cell = this.current_cell.filter((element) => element.selected === true);
-
-    // using splice direct to the original array and not creating new one
-    for (let i = this.current_cell.length - 1; i >= 0; i--) {
-      if (this.current_cell[i].selected === false) {
-        this.current_cell.splice(i, 1);
-      }
-    }
+    this.#clearUnselectedCells();
   }
   selectCell(mx, my) {
-    const p = this.p;
+    const [x, y] = this.#transformMouseToPosition(mx, my);
 
-    let x = Math.floor(mx / this.scl);
-    let y = Math.floor(my / this.scl);
-    if (x > -1 && x < this.g_width) {
-      if (y > -1 && y < this.g_height) {
-        //cell inside canvas
-        let index = x + y * this.g_width;
-        let found = false;
+    if (this.#outOfBoundaries(x, y)) return;
 
-        this.current_cell.forEach((element) => {
-          this.mult_select === false && element.select(false);
-          if (element === this.cells[index]) {
-            found = true;
-            element.select(false);
-          }
-        });
+    const index = this.#transformXandYtoIndex(x, y);
+    const found = this.current_cell.has(this.cells[index]);
 
-        if (!found) {
-          this.cells[index].select(true);
-          this.current_cell.push(this.cells[index]);
-        }
+    this.cells[index].select(!found);
+    !found && this.current_cell.add(this.cells[index]);
 
-        return index;
-      }
-    }
+    return index;
   }
 
-  selectByIndex(index) {
-    const p = this.p;
-    let found = false;
-
-    //cell inside canvas
-
-    this.current_cell.forEach((element) => {
-      this.mult_select === false && element.select(false);
-      if (element === this.cells[index]) {
-        found = true;
-        element.select(false);
-      }
-    });
-
-    if (!found) {
-      this.cells[index].select(true);
-      this.current_cell.push(this.cells[index]);
-    }
-  }
 
   selectNeighbors(index) {
-    let row = Math.floor(index / this.g_width);
-    let col = index % this.g_width;
+
+    const [col, row] = this.#transformIndexToPosition(index)
 
     for (let yOffset = -1; yOffset <= 1; yOffset++) {
       let new_y = this.#wrapY(row + yOffset);
       for (let xOffset = -1; xOffset <= 1; xOffset++) {
         let new_x = this.#wrapX(col + xOffset);
 
-        let neighborsIndex = new_x + new_y * this.g_width;
+        let neighborsIndex = this.#transformXandYtoIndex(new_x, new_y);
         if (neighborsIndex !== index) {
-          this.selectByIndex(neighborsIndex);
-        }
+          let found = this.current_cell.has(this.cells[neighborsIndex])  
+          this.cells[neighborsIndex].select(!found);
+        if (!found) {
+          this.cells[neighborsIndex].select(true);
+          this.current_cell.add(this.cells[neighborsIndex]);
+        }        }
       }
+    }
+  }
+
+
+  selectByIndex(index) {
+
+    let found = this.current_cell.has(this.cells[index])  
+      this.cells[index].select(!found);
+    if (!found) {
+      this.cells[index].select(true);
+      this.current_cell.add(this.cells[index]);
     }
   }
 
@@ -136,9 +108,43 @@ export default class Grid {
   #fillGrid() {
     for (let y = 0; y < this.g_height; y++) {
       for (let x = 0; x < this.g_width; x++) {
-        this.cells.push(new Tile(this.p, this.tileConfig(x, y)));
+        let index = x + y * this.g_width;
+
+        this.cells.push(new Tile(this.p, this.tileConfig(x, y, index)));
       }
     }
+  }
+
+  #clearUnselectedCells() {
+    this.current_cell.forEach((item) => {
+      if (!item.selected) {
+        this.current_cell.delete(item);
+      }
+    });
+  }
+  #transformMouseToPosition(mx, my) {
+    let x = Math.floor(mx / this.scl);
+    let y = Math.floor(my / this.scl);
+
+    return [x, y];
+  }
+
+  #transformIndexToPosition(index) {
+
+    let x = index % this.g_width;
+    let y = Math.floor(index / this.g_width);
+
+    return [x, y];
+  }
+
+  #transformXandYtoIndex(x, y) {
+    return x + y * this.g_width;
+  }
+
+  #outOfBoundaries(x, y) {
+    if (x > -1 && x < this.g_width && y > -1 && y < this.g_height) return false;
+
+    return true;
   }
 
   calcFPS() {

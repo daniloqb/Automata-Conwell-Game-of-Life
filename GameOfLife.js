@@ -25,7 +25,7 @@ export default class GameOfLife {
       };
 
       p.draw = function () {
-        grid.update();
+        grid.updateGrid();
       };
 
       p.mousePressed = function () {
