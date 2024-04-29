@@ -11,7 +11,7 @@ export default class Grid {
     this.lastFrameTime = performance.now();
     this.mult_select = true;
     this.cells = Array();
-    this.current_cell = new Set();
+    this.activeCells = new Set();
 
     this.tileConfig = (x, y, index) => ({
       index: index,
@@ -33,28 +33,131 @@ export default class Grid {
   }
 
   updateGrid() {
-    //this.logFPS && this.calcFPS();
-    this.#displayItems(this.current_cell);
+    this.logFPS && this.calcFPS();
+    this.#displayItems(this.activeCells);
     this.#clearUnselectedCells();
+    this.#applyRules();
   }
+
   selectCell(mx, my) {
     const [x, y] = this.#transformMouseToPosition(mx, my);
 
     if (this.#outOfBoundaries(x, y)) return;
 
     const index = this.#transformXandYtoIndex(x, y);
-    const found = this.current_cell.has(this.cells[index]);
+    const found = this.activeCells.has(this.cells[index]);
 
     this.cells[index].select(!found);
-    !found && this.current_cell.add(this.cells[index]);
+    !found && this.activeCells.add(this.cells[index]);
 
     return index;
   }
 
+  #applyRules() {
+
+    let markCellsToBorn = new Set();
+    let deadNeighborsToCheck = new Set();
+
+    let aliveNeighborsCountCache = new Map();
+
+    this.activeCells.forEach((element) => {
+      let index = element.index;
+      let neighbors = element.neighbors;
+
+      let count = aliveNeighborsCountCache.get(index);
+
+      if (count === undefined) {
+        count = this.getAliveNeighborsCount(neighbors);
+        aliveNeighborsCountCache.set(index, count);
+      }
+
+      neighbors
+        .filter((element) => this.getTileStatus(element) == false)
+        .forEach((element) => {
+          deadNeighborsToCheck.add(element);
+        });
+
+    });
+
+    deadNeighborsToCheck.forEach((index) => {
+      let neighbors = this.cells[index].neighbors;
+      let aliveNeighborsCount = this.getAliveNeighborsCount(neighbors);
+
+      if (aliveNeighborsCount === 3) {
+        markCellsToBorn.add(index);
+      }
+    });
+
+    for (let index of aliveNeighborsCountCache.keys()) {
+      let count = aliveNeighborsCountCache.get(index);
+      if (count < 2 || count > 3) {
+        this.cells[index].select(false);
+      }
+    }
+
+    markCellsToBorn.forEach((element) => {
+      this.cells[element].select(true);
+      this.activeCells.add(this.cells[element]);
+    });
+  }
+
+  /*   #applyRules() {
+    let markCellsToDie = new Set();
+    let markCellsToBorn = new Set();
+    let deadNeighborsToCheck = new Set();
+
+    this.activeCells.forEach((element) => {
+      let index = element.index;
+      let neighbors = element.neighbors;
+
+      neighbors
+        .filter((element) => this.getTileStatus(element) == false)
+        .forEach((element) => {
+          deadNeighborsToCheck.add(element);
+        });
+
+      let aliveNeighborsCount = this.getAliveNeighborsCount(neighbors);
+
+      if (aliveNeighborsCount < 2 || aliveNeighborsCount > 3) {
+        markCellsToDie.add(index);
+      }
+    });
+
+    deadNeighborsToCheck.forEach((index) => {
+      let neighbors = this.cells[index].neighbors;
+      let aliveNeighborsCount = this.getAliveNeighborsCount(neighbors);
+      
+      if (aliveNeighborsCount === 3) {
+        markCellsToBorn.add(index);
+      }
+    });
+
+    // update Cells
+    markCellsToDie.forEach((element) => {
+      this.cells[element].select(false);
+    });
+    markCellsToBorn.forEach((element) => {
+      this.cells[element].select(true);
+      this.activeCells.add(this.cells[element]);
+    });
+  } */
+
+  getAliveNeighborsCount(neighborsIndex) {
+    let aliveNeighborsCount = neighborsIndex.reduce(
+      (neighborsAlive, currentNeighbor) => {
+        return neighborsAlive + this.getTileStatus(currentNeighbor);
+      },
+      0
+    );
+
+    return aliveNeighborsCount;
+  }
+  getTileStatus(index) {
+    return this.cells[index].selected;
+  }
 
   selectNeighbors(index) {
-
-    const [col, row] = this.#transformIndexToPosition(index)
+    const [col, row] = this.#transformIndexToPosition(index);
 
     for (let yOffset = -1; yOffset <= 1; yOffset++) {
       let new_y = this.#wrapY(row + yOffset);
@@ -63,25 +166,33 @@ export default class Grid {
 
         let neighborsIndex = this.#transformXandYtoIndex(new_x, new_y);
         if (neighborsIndex !== index) {
-          let found = this.current_cell.has(this.cells[neighborsIndex])  
+          let found = this.activeCells.has(this.cells[neighborsIndex]);
           this.cells[neighborsIndex].select(!found);
-        if (!found) {
-          this.cells[neighborsIndex].select(true);
-          this.current_cell.add(this.cells[neighborsIndex]);
-        }        }
+          if (!found) {
+            this.cells[neighborsIndex].select(true);
+            this.activeCells.add(this.cells[neighborsIndex]);
+          }
+        }
       }
     }
   }
 
+  getNeighborsIndex(index) {
+    let neighbors = [];
+    const [col, row] = this.#transformIndexToPosition(index);
 
-  selectByIndex(index) {
+    for (let yOffset = -1; yOffset <= 1; yOffset++) {
+      let new_y = this.#wrapY(row + yOffset);
+      for (let xOffset = -1; xOffset <= 1; xOffset++) {
+        let new_x = this.#wrapX(col + xOffset);
 
-    let found = this.current_cell.has(this.cells[index])  
-      this.cells[index].select(!found);
-    if (!found) {
-      this.cells[index].select(true);
-      this.current_cell.add(this.cells[index]);
+        let neighborsIndex = this.#transformXandYtoIndex(new_x, new_y);
+        if (neighborsIndex !== index) {
+          neighbors.push(neighborsIndex);
+        }
+      }
     }
+    return neighbors;
   }
 
   #wrapX(x) {
@@ -106,19 +217,29 @@ export default class Grid {
   }
 
   #fillGrid() {
+    let percentage = Math.random();
     for (let y = 0; y < this.g_height; y++) {
       for (let x = 0; x < this.g_width; x++) {
         let index = x + y * this.g_width;
 
         this.cells.push(new Tile(this.p, this.tileConfig(x, y, index)));
+        let neighbors = this.getNeighborsIndex(index);
+        this.cells[index].setNeighbors(neighbors);
+
+        if (Math.random() < percentage) {
+          this.cells[index].select(true);
+        }
       }
     }
+    this.activeCells = new Set(
+      this.cells.filter((element) => element.selected == true)
+    );
   }
 
   #clearUnselectedCells() {
-    this.current_cell.forEach((item) => {
+    this.activeCells.forEach((item) => {
       if (!item.selected) {
-        this.current_cell.delete(item);
+        this.activeCells.delete(item);
       }
     });
   }
@@ -130,7 +251,6 @@ export default class Grid {
   }
 
   #transformIndexToPosition(index) {
-
     let x = index % this.g_width;
     let y = Math.floor(index / this.g_width);
 
@@ -148,15 +268,14 @@ export default class Grid {
   }
 
   calcFPS() {
-    const current_time = performance.now();
-    const deltaTime = current_time - this.lastFrameTime;
-    console.log(`Delta: ${deltaTime}`);
+    const currentNeighborrent_time = performance.now();
+    const deltaTime = currentNeighborrent_time - this.lastFrameTime;
     this.frameCount++;
     if (deltaTime >= 1000) {
       const fps = Math.round((this.frameCount * 1000) / deltaTime);
       console.log(`FPS: ${fps}`);
       this.frameCount = 0;
-      this.lastFrameTime = current_time;
+      this.lastFrameTime = currentNeighborrent_time;
     }
   }
 }

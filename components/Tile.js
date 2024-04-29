@@ -20,9 +20,9 @@ export default class Tile {
     let pos_i = params && (params.pos_i ? params.pos_i : 0);
     let pos_j = params && (params.pos_j ? params.pos_j : 0);
     let s = params && (params.size ? params.size : 0);
-    let index = params && (params.index ? params.index : 0);
 
-
+    this.index = params && (params.index ? params.index : 0);
+    this.neighbors = [];
     this.x = pos_i * s;
     this.y = pos_j * s;
     this.size = s;
@@ -141,10 +141,16 @@ export default class Tile {
     this.selected = status;
     this.color = this.selected ? this.color_select : this.color_unselect;
   }
-  cor(value){
+  cor(value) {
     this.color = value;
   }
-  getTileIndex(){
+  getTileIndex() {
     return this.index;
+  }
+  setNeighbors(neighbors) {
+    this.neighbors = neighbors;
+  }
+  getNeighbors() {
+    return this.neighbors;
   }
 }
