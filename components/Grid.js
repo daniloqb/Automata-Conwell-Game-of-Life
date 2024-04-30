@@ -3,10 +3,10 @@ import Tile from "./Tile.js";
 export default class Grid {
   constructor(p, h, w, s) {
     this.p = p;
-    this.g_width = w;
-    this.g_height = h;
-    this.scl = s;
-    this.logFPS = true;
+    this.gridWidth = w;
+    this.gridHeight = h;
+    this.cellSize = s;
+    this.logFPS = false;
     this.frameCount = 0;
     this.lastFrameTime = performance.now();
     this.mult_select = true;
@@ -17,7 +17,7 @@ export default class Grid {
       index: index,
       pos_i: x,
       pos_j: y,
-      size: this.scl,
+      size: this.cellSize,
       // border_width: [0.6, 0.6, 0.6, 0.6],
       border_color: ["gray", "gray", "gray", "gray"],
       //vertex_width: [0, 0, 0, 0],
@@ -33,10 +33,9 @@ export default class Grid {
   }
 
   updateGrid() {
-    this.logFPS && this.calcFPS();
+    //this.logFPS && this.calcFPS();
     this.#displayItems(this.activeCells);
     this.#clearUnselectedCells();
-    this.#applyRules();
   }
 
   selectCell(mx, my) {
@@ -53,128 +52,17 @@ export default class Grid {
     return index;
   }
 
-  #applyRules() {
-
-    let markCellsToBorn = new Set();
-    let deadNeighborsToCheck = new Set();
-
-    let aliveNeighborsCountCache = new Map();
-
-    this.activeCells.forEach((element) => {
-      let index = element.index;
-      let neighbors = element.neighbors;
-
-      let count = aliveNeighborsCountCache.get(index);
-
-      if (count === undefined) {
-        count = this.getAliveNeighborsCount(neighbors);
-        aliveNeighborsCountCache.set(index, count);
-      }
-
-      neighbors
-        .filter((element) => this.getTileStatus(element) == false)
-        .forEach((element) => {
-          deadNeighborsToCheck.add(element);
-        });
-
-    });
-
-    deadNeighborsToCheck.forEach((index) => {
-      let neighbors = this.cells[index].neighbors;
-      let aliveNeighborsCount = this.getAliveNeighborsCount(neighbors);
-
-      if (aliveNeighborsCount === 3) {
-        markCellsToBorn.add(index);
-      }
-    });
-
-    for (let index of aliveNeighborsCountCache.keys()) {
-      let count = aliveNeighborsCountCache.get(index);
-      if (count < 2 || count > 3) {
-        this.cells[index].select(false);
-      }
-    }
-
-    markCellsToBorn.forEach((element) => {
-      this.cells[element].select(true);
-      this.activeCells.add(this.cells[element]);
-    });
-  }
-
-  /*   #applyRules() {
-    let markCellsToDie = new Set();
-    let markCellsToBorn = new Set();
-    let deadNeighborsToCheck = new Set();
-
-    this.activeCells.forEach((element) => {
-      let index = element.index;
-      let neighbors = element.neighbors;
-
-      neighbors
-        .filter((element) => this.getTileStatus(element) == false)
-        .forEach((element) => {
-          deadNeighborsToCheck.add(element);
-        });
-
-      let aliveNeighborsCount = this.getAliveNeighborsCount(neighbors);
-
-      if (aliveNeighborsCount < 2 || aliveNeighborsCount > 3) {
-        markCellsToDie.add(index);
-      }
-    });
-
-    deadNeighborsToCheck.forEach((index) => {
-      let neighbors = this.cells[index].neighbors;
-      let aliveNeighborsCount = this.getAliveNeighborsCount(neighbors);
-      
-      if (aliveNeighborsCount === 3) {
-        markCellsToBorn.add(index);
-      }
-    });
-
-    // update Cells
-    markCellsToDie.forEach((element) => {
-      this.cells[element].select(false);
-    });
-    markCellsToBorn.forEach((element) => {
-      this.cells[element].select(true);
-      this.activeCells.add(this.cells[element]);
-    });
-  } */
-
-  getAliveNeighborsCount(neighborsIndex) {
-    let aliveNeighborsCount = neighborsIndex.reduce(
-      (neighborsAlive, currentNeighbor) => {
-        return neighborsAlive + this.getTileStatus(currentNeighbor);
-      },
-      0
-    );
-
-    return aliveNeighborsCount;
-  }
-  getTileStatus(index) {
+  getCellStatus(index) {
     return this.cells[index].selected;
   }
 
-  selectNeighbors(index) {
-    const [col, row] = this.#transformIndexToPosition(index);
+  setCellStatus(index, status) {
+    this.cells[index].select(status);
+    return this.cells[index].selected;
+  }
 
-    for (let yOffset = -1; yOffset <= 1; yOffset++) {
-      let new_y = this.#wrapY(row + yOffset);
-      for (let xOffset = -1; xOffset <= 1; xOffset++) {
-        let new_x = this.#wrapX(col + xOffset);
-
-        let neighborsIndex = this.#transformXandYtoIndex(new_x, new_y);
-        if (neighborsIndex !== index) {
-          let found = this.activeCells.has(this.cells[neighborsIndex]);
-          this.cells[neighborsIndex].select(!found);
-          if (!found) {
-            this.cells[neighborsIndex].select(true);
-            this.activeCells.add(this.cells[neighborsIndex]);
-          }
-        }
-      }
-    }
+  addActiveCell(index){
+    this.activeCells.add(this.cells[index]);
   }
 
   getNeighborsIndex(index) {
@@ -195,32 +83,11 @@ export default class Grid {
     return neighbors;
   }
 
-  #wrapX(x) {
-    return (x + this.g_width) % this.g_width;
-    // my code vs the Copilot optimized code
-    /*     let result = x;
-    if (x < 0) {
-      result = this.g_width + x;
-    } else if (x >= this.g_width) {
-      result = x - this.g_width;
-    }
-
-    return result; */
-  }
-
-  #wrapY(y) {
-    return (y + this.g_height) % this.g_height;
-  }
-
-  #displayItems(itemsCollection) {
-    itemsCollection.forEach((item) => item.show());
-  }
-
   #fillGrid() {
     let percentage = Math.random();
-    for (let y = 0; y < this.g_height; y++) {
-      for (let x = 0; x < this.g_width; x++) {
-        let index = x + y * this.g_width;
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
+        let index = x + y * this.gridWidth;
 
         this.cells.push(new Tile(this.p, this.tileConfig(x, y, index)));
         let neighbors = this.getNeighborsIndex(index);
@@ -236,6 +103,10 @@ export default class Grid {
     );
   }
 
+  #displayItems(elementColletion) {
+    elementColletion.forEach((element) => element.show());
+  }
+
   #clearUnselectedCells() {
     this.activeCells.forEach((item) => {
       if (!item.selected) {
@@ -243,26 +114,36 @@ export default class Grid {
       }
     });
   }
+
+  #wrapX(x) {
+    return (x + this.gridWidth) % this.gridWidth;
+  }
+
+  #wrapY(y) {
+    return (y + this.gridHeight) % this.gridHeight;
+  }
+
   #transformMouseToPosition(mx, my) {
-    let x = Math.floor(mx / this.scl);
-    let y = Math.floor(my / this.scl);
+    let x = Math.floor(mx / this.cellSize);
+    let y = Math.floor(my / this.cellSize);
 
     return [x, y];
   }
 
   #transformIndexToPosition(index) {
-    let x = index % this.g_width;
-    let y = Math.floor(index / this.g_width);
+    let x = index % this.gridWidth;
+    let y = Math.floor(index / this.gridWidth);
 
     return [x, y];
   }
 
   #transformXandYtoIndex(x, y) {
-    return x + y * this.g_width;
+    return x + y * this.gridWidth;
   }
 
   #outOfBoundaries(x, y) {
-    if (x > -1 && x < this.g_width && y > -1 && y < this.g_height) return false;
+    if (x > -1 && x < this.gridWidth && y > -1 && y < this.gridHeight)
+      return false;
 
     return true;
   }

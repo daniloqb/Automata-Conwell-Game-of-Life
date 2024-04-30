@@ -48,6 +48,7 @@ export default class Tile {
     const color = this.color;
     p.fill(p.color(this.vertex_color[0]));
     p.noStroke();
+
     color ? p.fill(p.color(color)) : p.noFill();
 
     size > 0 && p.rect(x, y, size, size);
