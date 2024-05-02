@@ -1,11 +1,10 @@
 import Tile from "./Tile.js";
 
 export default class Grid {
-  constructor(p, h, w, s) {
+  constructor(p, rows, cols, cellConfig) {
     this.p = p;
-    this.gridWidth = w;
-    this.gridHeight = h;
-    this.cellSize = s;
+    this.gridWidth = cols;
+    this.gridHeight = rows;
     this.logFPS = false;
     this.frameCount = 0;
     this.lastFrameTime = performance.now();
@@ -13,28 +12,36 @@ export default class Grid {
     this.cells = Array();
     this.activeCells = new Set();
 
-    this.tileConfig = (x, y, index) => ({
+    const cellConfigDefault = (x, y, index) => ({
       index: index,
       pos_i: x,
       pos_j: y,
-      size: this.cellSize,
+      size: 3,
       // border_width: [0.6, 0.6, 0.6, 0.6],
       border_color: ["gray", "gray", "gray", "gray"],
       //vertex_width: [0, 0, 0, 0],
       vertex_color: ["black", "black", "black", "black"],
       color: "blue",
       color_select: "orange",
+      stateList: [
+        { key: 0, color: "black", value: 0 },
+        { key: 1, color: "white", value: 1 },
+      ],
     });
+
+    this.cellConfig = cellConfig ? cellConfig : cellConfigDefault;
+    this.cellSize = this.cellConfig().size;
+    this.stateList = this.cellConfig().stateList;
   }
 
   initGrid() {
     this.#fillGrid();
-    this.#displayItems(this.cells);
+    // this.#displayItems(this.cells);
   }
 
   updateGrid() {
     //this.logFPS && this.calcFPS();
-    this.#displayItems(this.activeCells);
+    // this.#displayItems(this.activeCells);
     this.#clearUnselectedCells();
   }
 
@@ -46,22 +53,28 @@ export default class Grid {
     const index = this.#transformXandYtoIndex(x, y);
     const found = this.activeCells.has(this.cells[index]);
 
-    this.cells[index].select(!found);
-    !found && this.activeCells.add(this.cells[index]);
-
-    return index;
+    if (found) {
+      this.cells[index].setState(this.stateList[0].key);
+      this.activeCells.delete(this.cells[index]);
+    } else {
+      this.cells[index].setState(this.stateList[1].key);
+      this.activeCells.add(this.cells[index]);
+    }
   }
 
   getCellStatus(index) {
-    return this.cells[index].selected;
+    return this.cells[index].getState();
+  }
+  getCellValue(index) {
+    return this.cells[index].getValue();
   }
 
   setCellStatus(index, status) {
-    this.cells[index].select(status);
-    return this.cells[index].selected;
+    this.cells[index].setState(status);
+    return this.cells[index].getState();
   }
 
-  addActiveCell(index){
+  addActiveCell(index) {
     this.activeCells.add(this.cells[index]);
   }
 
@@ -89,18 +102,30 @@ export default class Grid {
       for (let x = 0; x < this.gridWidth; x++) {
         let index = x + y * this.gridWidth;
 
-        this.cells.push(new Tile(this.p, this.tileConfig(x, y, index)));
+        this.cells.push(new Tile(this.p, this.cellConfig(x, y, index)));
         let neighbors = this.getNeighborsIndex(index);
         this.cells[index].setNeighbors(neighbors);
 
-        if (Math.random() < percentage) {
-          this.cells[index].select(true);
+        if (Math.random() < 0.1) {
+          this.cells[index].setState(1);
+        } else {
+          this.cells[index].setState(0);
         }
       }
     }
-    this.activeCells = new Set(
-      this.cells.filter((element) => element.selected == true)
-    );
+    this.activeCells.clear();
+
+    this.cells.forEach((item) => {
+      let val = item.getValue();
+      if (val == 1) {
+        console.log(item,val);
+        this.activeCells.add(item);
+      }
+    });
+
+    this.activeCells.forEach((element) => {
+     // console.log(element);
+    });
   }
 
   #displayItems(elementColletion) {
@@ -109,7 +134,7 @@ export default class Grid {
 
   #clearUnselectedCells() {
     this.activeCells.forEach((item) => {
-      if (!item.selected) {
+      if (item.getValue() === 0) {
         this.activeCells.delete(item);
       }
     });

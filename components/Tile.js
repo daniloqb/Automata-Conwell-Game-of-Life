@@ -1,34 +1,50 @@
 export default class Tile {
   #p;
 
-  constructor(p, params) {
+  constructor(p, params = {}) {
+    const {
+      vertex_width = [0, 0, 0, 0],
+      vertex_color = [0, 0, 0, 0],
+      border_width = [0, 0, 0, 0],
+      border_color = [0, 0, 0, 0],
+      pos_i = 0,
+      pos_j = 0,
+      size = 0,
+      index = 0,
+      stateList = [
+        { key: false, color: "blue", value: 0 },
+        { key: true, color: "orange", value: 1 },
+      ],
+    } = params;
     this.#p = p;
-    this.color_unselect = params && (params.color ? params.color : false);
-    this.color_select =
-      params && (params.color_select ? params.color_select : "red");
-    this.color = this.color_unselect;
-    this.selected = false;
-    this.vertex_width =
-      params && (params.vertex_width ? params.vertex_width : [0, 0, 0, 0]);
-    this.vertex_color =
-      params && (params.vertex_color ? params.vertex_color : [0, 0, 0, 0]);
 
-    this.border_width =
-      params && (params.border_width ? params.border_width : [0, 0, 0, 0]);
-    this.border_color =
-      params && (params.border_color ? params.border_color : [0, 0, 0, 0]);
-    let pos_i = params && (params.pos_i ? params.pos_i : 0);
-    let pos_j = params && (params.pos_j ? params.pos_j : 0);
-    let s = params && (params.size ? params.size : 0);
+    this.vertex_width = vertex_width;
+    this.vertex_color = vertex_color;
+    this.border_width = border_width;
+    this.border_color = border_color;
+    this.x = pos_i * size;
+    this.y = pos_j * size;
 
-    this.index = params && (params.index ? params.index : 0);
+    this.index = index;
     this.neighbors = [];
-    this.x = pos_i * s;
-    this.y = pos_j * s;
-    this.size = s;
+
+    this.size = size;
 
     this.isVertex = this.vertex_width.find((value) => value > 0) ? true : false;
     this.isBorder = this.border_width.find((value) => value > 0) ? true : false;
+
+    this.mapStateColor = new Map();
+    this.mapStateValue = new Map();
+    this.stateList = stateList;
+
+    this.stateList.forEach(({ key, color, value }) => {
+      this.mapStateColor.set(key, color);
+      this.mapStateValue.set(key, value);
+    });
+
+    this.state = this.setState(0)
+    this.value = this.mapStateValue.get(this.state);
+    this.color = this.mapStateColor.get(this.state);
   }
 
   show() {
@@ -46,6 +62,7 @@ export default class Tile {
     const x = this.x;
     const y = this.y;
     const color = this.color;
+
     p.fill(p.color(this.vertex_color[0]));
     p.noStroke();
 
@@ -60,8 +77,6 @@ export default class Tile {
       const p = this.#p;
       const border_color = this.border_color;
       const border_width = this.border_width;
-      const vertex_width = this.vertex_width;
-      const vertex_color = this.vertex_color;
       const x_left = this.x;
       const x_right = this.x + this.size;
       const y_up = this.y;
@@ -138,14 +153,26 @@ export default class Tile {
       }
     }
   }
-  select(status) {
-    this.selected = status;
-    this.color = this.selected ? this.color_select : this.color_unselect;
+
+  setState(state) {
+    if (state != this.state) {
+      this.state = state;
+      this.color = this.mapStateColor.get(state);
+      this.value = this.mapStateValue.get(state);
+      this.show();
+      //console.log(this.state, this.color, this.value)
+    }
   }
-  cor(value) {
-    this.color = value;
+  getState() {
+    return this.state;
   }
-  getTileIndex() {
+  getValue() {
+   
+    return  this.mapStateValue.get(this.state);
+
+  }
+
+  getCellIndex() {
     return this.index;
   }
   setNeighbors(neighbors) {
