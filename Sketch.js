@@ -1,4 +1,4 @@
-import Grid from "./components/Grid.js";
+import Grid from "./components/Grid.mjs";
 
 export default class Sketch {
   #container;

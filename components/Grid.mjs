@@ -1,4 +1,4 @@
-import Tile from "./Tile.js";
+import Tile from "./Tile.mjs";
 
 export default class Grid {
   constructor(p, rows, cols, cellConfig) {
@@ -118,7 +118,7 @@ export default class Grid {
     this.cells.forEach((item) => {
       let val = item.getValue();
       if (val == 1) {
-        console.log(item,val);
+        console.log(item,"Val: ",val);
         this.activeCells.add(item);
       }
     });
