@@ -117,14 +117,14 @@ export default class Grid {
 
     this.cells.forEach((item) => {
       let val = item.getValue();
-      if (val == 1) {
+      if (val === 1) {
         console.log(item,val);
         this.activeCells.add(item);
       }
     });
 
     this.activeCells.forEach((element) => {
-     // console.log(element);
+     console.log(element);
     });
   }
 

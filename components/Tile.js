@@ -33,6 +33,10 @@ export default class Tile {
     this.isVertex = this.vertex_width.find((value) => value > 0) ? true : false;
     this.isBorder = this.border_width.find((value) => value > 0) ? true : false;
 
+    this.state = 999;
+    this.color = 999;
+    this.value = 999;
+
     this.mapStateColor = new Map();
     this.mapStateValue = new Map();
     this.stateList = stateList;
@@ -42,7 +46,11 @@ export default class Tile {
       this.mapStateValue.set(key, value);
     });
 
-    this.state = this.setState(0)
+    this.#init();
+  }
+
+  #init() {
+    this.state = this.setState(0);
     this.value = this.mapStateValue.get(this.state);
     this.color = this.mapStateColor.get(this.state);
   }
@@ -167,9 +175,7 @@ export default class Tile {
     return this.state;
   }
   getValue() {
-   
-    return  this.mapStateValue.get(this.state);
-
+    return this.mapStateValue.get(this.state);
   }
 
   getCellIndex() {
