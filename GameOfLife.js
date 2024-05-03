@@ -1,6 +1,5 @@
 import Grid from "./components/Grid.js";
 
-
 export default class GameOfLife {
   #container;
 
@@ -9,27 +8,23 @@ export default class GameOfLife {
 
     this.sketch = function (p) {
       let pause = false;
-      const size = 60;
-      const rows = 600;
-      const cols = 600;
-      const live = 1;
-      const dead = 0;
-      /*       const rows = 600;
-      const cols = 600; */
+      const size = 3;
+      const rows = p.windowHeight;
+      const cols = p.windowWidth;
+      const live = Symbol();
+      const dead = Symbol();
 
       const cellConfig = (x, y, index) => ({
         index: index,
         pos_i: x,
         pos_j: y,
         size,
+        gap: 0,
         stateList: [
           { key: dead, color: "blue", value: 0 },
           { key: live, color: "orange", value: 1 },
-          { key: 2, color: "gray", value: 0 },
         ],
       });
-
-   
 
       let grid = new Grid(
         p,
@@ -42,7 +37,7 @@ export default class GameOfLife {
         p.frameRate(10);
         p.createCanvas(cols, rows);
         p.noLoop();
-        //p.background("cyan");
+       p.background("gray");
         grid.initGrid();
       };
 
@@ -53,7 +48,6 @@ export default class GameOfLife {
 
       p.mousePressed = function () {
         var index = grid.selectCell(p.mouseX, p.mouseY);
-
       };
 
       p.keyPressed = function () {
@@ -77,9 +71,7 @@ export default class GameOfLife {
 
           for (const index of neighborsIndex) {
             aliveNeighborsCount += grid.getCellValue(index);
-            
           }
-        
 
           return aliveNeighborsCount;
         };
@@ -97,7 +89,7 @@ export default class GameOfLife {
           for (let index of neighborsCountCache.keys()) {
             let aliveNeighborsCount = neighborsCountCache.get(index);
             if (aliveNeighborsCount < 2 || aliveNeighborsCount > 3) {
-              grid.setCellStatus(index,dead);
+              grid.setCellStatus(index, dead);
             }
           }
         };
@@ -115,14 +107,13 @@ export default class GameOfLife {
           }
         };
 
-        grid.activeCells.forEach((element) => {
-          let index = element.index;
-          let neighbors = element.neighbors;
+        grid.activeCells.forEach((index) => {
+          let neighbors = grid.getCellNeighbors(index);
 
           selectCellsToCheck(index, neighbors);
 
           neighbors
-            .filter((index) => grid.getCellStatus(index) == dead)
+            .filter((index) => grid.getCellValue(index) == 0)
             .forEach((index) => {
               deadNeighborsToCheck.add(index);
             });

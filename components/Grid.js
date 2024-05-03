@@ -5,10 +5,6 @@ export default class Grid {
     this.p = p;
     this.gridWidth = cols;
     this.gridHeight = rows;
-    this.logFPS = false;
-    this.frameCount = 0;
-    this.lastFrameTime = performance.now();
-    this.mult_select = true;
     this.cells = Array();
     this.activeCells = new Set();
 
@@ -17,12 +13,7 @@ export default class Grid {
       pos_i: x,
       pos_j: y,
       size: 3,
-      // border_width: [0.6, 0.6, 0.6, 0.6],
-      border_color: ["gray", "gray", "gray", "gray"],
-      //vertex_width: [0, 0, 0, 0],
-      vertex_color: ["black", "black", "black", "black"],
-      color: "blue",
-      color_select: "orange",
+      gap: 0,
       stateList: [
         { key: 0, color: "black", value: 0 },
         { key: 1, color: "white", value: 1 },
@@ -36,30 +27,44 @@ export default class Grid {
 
   initGrid() {
     this.#fillGrid();
-    // this.#displayItems(this.cells);
   }
 
   updateGrid() {
-    //this.logFPS && this.calcFPS();
-    // this.#displayItems(this.activeCells);
     this.#clearUnselectedCells();
   }
 
-  selectCell(mx, my) {
-    const [x, y] = this.#transformMouseToPosition(mx, my);
+  #fillGrid() {
+    let percentage = Math.random();
 
-    if (this.#outOfBoundaries(x, y)) return;
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
+        let index = x + y * this.gridWidth;
 
-    const index = this.#transformXandYtoIndex(x, y);
-    const found = this.activeCells.has(this.cells[index]);
+        this.cells.push(new Tile(this.p, this.cellConfig(x, y, index)));
+        let neighbors = this.getNeighborsIndex(index);
+        this.cells[index].setNeighbors(neighbors);
 
-    if (found) {
-      this.cells[index].setState(this.stateList[0].key);
-      this.activeCells.delete(this.cells[index]);
-    } else {
-      this.cells[index].setState(this.stateList[1].key);
-      this.activeCells.add(this.cells[index]);
+        let state =
+          Math.random() < percentage
+            ? this.stateList[1].key
+            : this.stateList[0].key;
+        this.cells[index].setState(state);
+      }
     }
+
+    this.cells.forEach((element) => {
+      let value = element.getValue();
+      if (value == 1) {
+        this.activeCells.add(element.index);
+      }
+    });
+  }
+  #clearUnselectedCells() {
+    this.activeCells.forEach((index) => {
+      if (this.cells[index].getValue() == 0) {
+        this.activeCells.delete(index);
+      }
+    });
   }
 
   getCellStatus(index) {
@@ -68,14 +73,33 @@ export default class Grid {
   getCellValue(index) {
     return this.cells[index].getValue();
   }
-
+  getCellNeighbors(index) {
+    return this.cells[index].getNeighbors();
+  }
   setCellStatus(index, status) {
     this.cells[index].setState(status);
     return this.cells[index].getState();
   }
 
   addActiveCell(index) {
-    this.activeCells.add(this.cells[index]);
+    this.activeCells.add(index);
+  }
+
+  selectCell(mx, my) {
+    const [x, y] = this.#transformMouseToPosition(mx, my);
+
+    if (this.#outOfBoundaries(x, y)) return;
+
+    const index = this.#transformXandYtoIndex(x, y);
+    const found = this.activeCells.has(index);
+
+    if (found) {
+      this.cells[index].setState(this.stateList[0].key);
+      this.activeCells.delete(index);
+    } else {
+      this.cells[index].setState(this.stateList[1].key);
+      this.activeCells.add(index);
+    }
   }
 
   getNeighborsIndex(index) {
@@ -94,50 +118,6 @@ export default class Grid {
       }
     }
     return neighbors;
-  }
-
-  #fillGrid() {
-    let percentage = Math.random();
-    for (let y = 0; y < this.gridHeight; y++) {
-      for (let x = 0; x < this.gridWidth; x++) {
-        let index = x + y * this.gridWidth;
-
-        this.cells.push(new Tile(this.p, this.cellConfig(x, y, index)));
-        let neighbors = this.getNeighborsIndex(index);
-        this.cells[index].setNeighbors(neighbors);
-
-        if (Math.random() < 0.1) {
-          this.cells[index].setState(1);
-        } else {
-          this.cells[index].setState(0);
-        }
-      }
-    }
-    this.activeCells.clear();
-
-    this.cells.forEach((item) => {
-      let val = item.getValue();
-      if (val === 1) {
-        console.log(item,val);
-        this.activeCells.add(item);
-      }
-    });
-
-    this.activeCells.forEach((element) => {
-     console.log(element);
-    });
-  }
-
-  #displayItems(elementColletion) {
-    elementColletion.forEach((element) => element.show());
-  }
-
-  #clearUnselectedCells() {
-    this.activeCells.forEach((item) => {
-      if (item.getValue() === 0) {
-        this.activeCells.delete(item);
-      }
-    });
   }
 
   #wrapX(x) {
@@ -171,17 +151,5 @@ export default class Grid {
       return false;
 
     return true;
-  }
-
-  calcFPS() {
-    const currentNeighborrent_time = performance.now();
-    const deltaTime = currentNeighborrent_time - this.lastFrameTime;
-    this.frameCount++;
-    if (deltaTime >= 1000) {
-      const fps = Math.round((this.frameCount * 1000) / deltaTime);
-      console.log(`FPS: ${fps}`);
-      this.frameCount = 0;
-      this.lastFrameTime = currentNeighborrent_time;
-    }
   }
 }
