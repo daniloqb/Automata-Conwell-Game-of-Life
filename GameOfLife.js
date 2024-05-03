@@ -13,6 +13,7 @@ export default class GameOfLife {
       const cols = p.windowWidth;
       const live = Symbol();
       const dead = Symbol();
+      const zumbi = Symbol();
 
       const cellConfig = (x, y, index) => ({
         index: index,
@@ -23,6 +24,7 @@ export default class GameOfLife {
         stateList: [
           { key: dead, color: "blue", value: 0 },
           { key: live, color: "orange", value: 1 },
+          { key: zumbi, color: "gray", value: 1 },
         ],
       });
 
@@ -70,7 +72,9 @@ export default class GameOfLife {
           let aliveNeighborsCount = 0;
 
           for (const index of neighborsIndex) {
-            aliveNeighborsCount += grid.getCellValue(index);
+            if (grid.getCellStatus(index) == live){
+              aliveNeighborsCount++;
+            }
           }
 
           return aliveNeighborsCount;
