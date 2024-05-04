@@ -51,11 +51,12 @@ export default class GameOfLife {
         p.frameRate(10);
         p.createCanvas(cols, rows);
         p.noLoop();
-        p.background("gray");
+       // p.background("black");
         grid.initGrid();
       };
 
       p.draw = function () {
+      //+  p.background("black");
         grid.updateGrid();
         this.applyRules();
       };
@@ -79,43 +80,37 @@ export default class GameOfLife {
           case 107: {
             zoom += zoom_resolution;
             zoom %= 101;
-            grid.setZoom(zoom);
+            [dx, dy] = grid.setZoom(zoom);
             break;
           }
           case 109: {
             zoom -= zoom_resolution;
             if (zoom < 1) zoom = 1;
 
-            grid.setZoom(zoom);
+            [dx, dy] = grid.setZoom(zoom);
             break;
           }
           case 37: {
-            dx -= displacement_resolution;
-            if (dx < 0) dx = 0;
-            grid.setDisplacement(dx, dy);
+            dx += displacement_resolution;
+            [dx, dy] = grid.setDisplacement(dx, dy);
             break;
           }
           case 39: {
-            dx += displacement_resolution;
-            if (dx > p.windowWidth) dx = p.windowWidth;
-            grid.setDisplacement(dx, dy);
+            dx -= displacement_resolution;
+            [dx, dy] = grid.setDisplacement(dx, dy);
             break;
           }
           case 38: {
-            dy -= displacement_resolution;
-            if (dy < 0) dy = 0;
-            grid.setDisplacement(dx, dy);
+            dy += displacement_resolution;
+            [dx, dy] = grid.setDisplacement(dx, dy);
             break;
           }
           case 40: {
-            dy += displacement_resolution;
-            if (dx > p.windowHeight) dy = p.windowHeight;
-            grid.setDisplacement(dx, dy);
+            dy -= displacement_resolution;
+            [dx, dy] = grid.setDisplacement(dx, dy);
             break;
           }
         }
-
-        console.log(zoom, dx,dy)
       };
 
       p.applyRules = function (p) {
