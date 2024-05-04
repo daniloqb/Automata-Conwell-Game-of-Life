@@ -3,39 +3,26 @@ export default class Tile {
 
   constructor(p, params = {}) {
     const {
-      pos_i = 0,
-      pos_j = 0,
+      x = 0,
+      y = 0,
       size = 0,
       index = 0,
       gap = 0,
-      zoom = 1,
-      dx = 0,
-      dy = 0,
-      rows = 500,
-      cols = 500,
       stateList = [
-        { key: 0, color: "blue", value: 0 },
-        { key: 1, color: "orange", value: 1 },
+        { key: 0, color: "black", value: 0 },
+        { key: 1, color: "white", value: 1 },
       ],
     } = params;
     this.#p = p;
 
-    this.x = pos_i * size;
-    this.y = pos_j * size;
+    this.x = x * size;
+    this.y = y * size;
     this.gap = gap;
 
     this.index = index;
     this.neighbors = [];
 
     this.size = size;
-    this.zoom = zoom;
-    this.dx = dx;
-    this.dy = dy;
-    this.rows = rows;
-    this.cols = cols;
-    this.relativeX = this.x * this.zoom;
-    this.relativeY = this.y * this.zoom;
-    this.relativeSize = this.size * this.zoom;
 
     this.state = 999;
     this.color = 999;
@@ -57,28 +44,24 @@ export default class Tile {
     this.state = this.stateList[0].key;
     this.value = this.mapStateValue.get(this.state);
     this.color = this.mapStateColor.get(this.state);
-    this.show();
   }
 
-  show() {
+  show(x, y, size) {
     //melhorar a leitura
 
     if (
-      this.relativeX >= 0 &&
-      this.relativeX <= this.cols &&
-      this.relativeY >= 0 &&
-      this.relativeY <= this.rows
+      x >= 0 &&
+      x <= this.#p.windowWidth &&
+      y >= 0 &&
+      y <= this.#p.windowHeight
     ) {
-      this.drawShape();
+      this.drawShape(x, y, size);
     }
   }
 
-  drawShape() {
+  drawShape(x, y, size) {
     // desenha o tile
     const p = this.#p;
-    const size = this.relativeSize;
-    const x = this.relativeX;
-    const y = this.relativeY;
     const gap = this.gap;
     const color = this.color;
 
@@ -89,23 +72,11 @@ export default class Tile {
     size > 0 && p.rect(x, y, size - gap, size - gap);
   }
 
-  updatePosition(zoom, dx, dy) {
-    this.zoom = zoom;
-    this.dx = dx;
-    this.dy = dy;
-    this.relativeSize = this.size * zoom;
-    this.relativeX = this.x * zoom + this.dx;
-    this.relativeY = this.y * zoom + this.dy;
-
-    this.show();
-  }
-
   setState(state) {
     if (state != this.state) {
       this.state = state;
       this.color = this.mapStateColor.get(state);
       this.value = this.mapStateValue.get(state);
-      this.show();
     }
   }
   getState() {
