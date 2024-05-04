@@ -7,7 +7,7 @@ export default class GameOfLife {
     this.#container = params && params.container ? params.container : "";
 
     this.sketch = function (p) {
-      let pause = false;
+      let pause = true;
       let zoom = 5;
       let zoom_resolution = 2;
       let displacement_resolution = 20;
@@ -16,7 +16,7 @@ export default class GameOfLife {
       const size = 1;
       const rows = p.windowHeight;
       const cols = p.windowWidth;
-      /*       const rows = 500;
+      /*     const rows = 500;
       const cols = 500; */
       const live = Symbol();
       const dead = Symbol();
@@ -51,14 +51,16 @@ export default class GameOfLife {
         p.frameRate(10);
         p.createCanvas(cols, rows);
         p.noLoop();
-       // p.background("black");
+        p.background("black");
         grid.initGrid();
       };
 
       p.draw = function () {
-      //+  p.background("black");
+        //+  p.background("black");
         grid.updateGrid();
         this.applyRules();
+
+        p.checkKeysDown();
       };
 
       p.mousePressed = function () {
@@ -78,38 +80,78 @@ export default class GameOfLife {
             break;
           }
           case 107: {
-            zoom += zoom_resolution;
-            zoom %= 101;
-            [dx, dy] = grid.setZoom(zoom);
+            p.zoomIn();
             break;
           }
           case 109: {
-            zoom -= zoom_resolution;
-            if (zoom < 1) zoom = 1;
+            p.zoomOut();
 
-            [dx, dy] = grid.setZoom(zoom);
             break;
           }
           case 37: {
-            dx += displacement_resolution;
-            [dx, dy] = grid.setDisplacement(dx, dy);
+            p.moveLeft();
+
             break;
           }
           case 39: {
-            dx -= displacement_resolution;
-            [dx, dy] = grid.setDisplacement(dx, dy);
+            p.moveRigh();
             break;
           }
           case 38: {
-            dy += displacement_resolution;
-            [dx, dy] = grid.setDisplacement(dx, dy);
+            p.moveUp();
+
             break;
           }
           case 40: {
-            dy -= displacement_resolution;
-            [dx, dy] = grid.setDisplacement(dx, dy);
+            p.moveDown();
+
             break;
           }
+        }
+      };
+
+      p.zoomIn = function () {
+        zoom += zoom_resolution;
+
+        [zoom, dx, dy] = grid.updatePosition(zoom, dx, dy);
+      };
+      p.zoomOut = function () {
+        zoom -= zoom_resolution;
+        [zoom, dx, dy] = grid.updatePosition(zoom, dx, dy);
+      };
+
+      p.moveRigh = function () {
+        dx -= displacement_resolution;
+        [zoom, dx, dy] = grid.updatePosition(zoom, dx, dy);
+      };
+
+      p.moveLeft = function () {
+        dx += displacement_resolution;
+        [zoom, dx, dy] = grid.updatePosition(zoom, dx, dy);
+      };
+
+      p.moveUp = function () {
+        dy += displacement_resolution;
+        [zoom, dx, dy] = grid.updatePosition(zoom, dx, dy);
+      };
+
+      p.moveDown = function () {
+        dy -= displacement_resolution;
+        [zoom, dx, dy] = grid.updatePosition(zoom, dx, dy);
+      };
+
+      p.checkKeysDown = function () {
+        if (p.keyIsDown(37) === true) {
+          p.moveLeft();
+        }
+        if (p.keyIsDown(39) === true) {
+          p.moveRigh();
+        }
+        if (p.keyIsDown(38) === true) {
+          p.moveUp();
+        }
+        if (p.keyIsDown(40) === true) {
+          p.moveDown();
         }
       };
 

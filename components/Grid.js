@@ -60,7 +60,7 @@ export default class Grid {
         this.cells[index].setNeighbors(neighbors);
 
         let state =
-          Math.random() < percentage
+          Math.random() < 0
             ? this.stateList[1].key
             : this.stateList[0].key;
         this.cells[index].setState(state);
@@ -92,7 +92,7 @@ export default class Grid {
     return this.cells[index].getNeighbors();
   }
   setCellStatus(index, status) {
-    this.cells[index].setState(status);
+    +this.cells[index].setState(status);
     return this.cells[index].getState();
   }
 
@@ -117,41 +117,48 @@ export default class Grid {
     }
   }
 
-  setZoom(zoom) {
-    this.zoom = zoom;
-    this.gridMaxX = this.gridWidth * this.zoom;
-    this.gridMaxY = this.gridHeight * this.zoom;
 
-    let [dx, dy] = this.setDisplacement(this.dx, this.dy);
-    this.cells.forEach((cell) => {
-      cell.setZoom(zoom);
-      cell.show();
-    });
-    return [dx, dy];
-  }
-  setDisplacement(dx, dy) {
-    if (this.zoom > 1) {
-      if (dx < this.gridWidth - this.gridMaxX) {
-        dx = this.gridWidth - this.gridMaxX;
-      } else if (dx > 0) {
-        dx = 0;
-      }
-
-      if (dy < this.gridHeight - this.gridMaxY) {
-        dy = this.gridHeight - this.gridMaxY;
-      } else if (dy > 0) {
-        dy = 0;
-      } 
-
-
-      this.dx = dx;
-      this.dy = dy;
-      this.cells.forEach((cell) => {
-        cell.setDisplacement(this.dx, this.dy);
-        cell.show();
-      });
+  updatePosition(zoom, dx, dy) {
+    // Validar e ajustar os limites do zoom
+    if (zoom < 1) {
+      zoom = 1;
+    } else if (zoom > 100) {
+      zoom = 100;
     }
-    return [this.dx, this.dy];
+
+    // Atualizar zoom apenas se ele mudar
+    if (zoom !== this.zoom) {
+      let centerX = Math.floor(this.gridWidth / 2);
+      let centerY = Math.floor(this.gridHeight / 2);
+
+      dx = Math.floor(centerX - ((centerX - this.dx) * zoom) / this.zoom);
+      dy = Math.floor(centerY - ((centerY - this.dy) * zoom) / this.zoom);
+
+      this.zoom = zoom;
+      this.gridMaxX = this.gridWidth * this.zoom;
+      this.gridMaxY = this.gridHeight * this.zoom;
+    }
+
+    // Condicional para centralizar o grid quando zoom é 1
+    if (this.zoom === 1) {
+      dx = 0;
+      dy = 0;
+    } else {
+      // Ajustar deslocamentos para evitar que a grid saia da área visível
+      dx = Math.min(Math.max(dx, this.gridWidth - this.gridMaxX), 0);
+      dy = Math.min(Math.max(dy, this.gridHeight - this.gridMaxY), 0);
+    }
+
+    // Aplicar o novo deslocamento
+    this.dx = dx;
+    this.dy = dy;
+
+    // Atualizar a posição de cada célula
+    this.cells.forEach((cell) => {
+      cell.updatePosition(this.zoom, this.dx, this.dy);
+    });
+
+    return [this.zoom, this.dx, this.dy];
   }
 
   getNeighborsIndex(index) {
@@ -181,13 +188,8 @@ export default class Grid {
   }
 
   #transformMouseToPosition(mx, my) {
-    let x =
-      Math.floor(mx / (this.cellSize * this.zoom)) -
-      this.dx / (this.cellSize * this.zoom);
-    let y =
-      Math.floor(my / (this.cellSize * this.zoom)) -
-      this.dy / (this.cellSize * this.zoom);
-
+    let x = Math.floor((mx - this.dx) / this.zoom);
+    let y = Math.floor((my - this.dy) / this.zoom);
     return [x, y];
   }
 

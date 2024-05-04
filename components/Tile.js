@@ -33,9 +33,9 @@ export default class Tile {
     this.dy = dy;
     this.rows = rows;
     this.cols = cols;
-    this.new_x = this.x * this.zoom;
-    this.new_y = this.y * this.zoom;
-    this.new_size = this.size * this.zoom;
+    this.relativeX = this.x * this.zoom;
+    this.relativeY = this.y * this.zoom;
+    this.relativeSize = this.size * this.zoom;
 
     this.state = 999;
     this.color = 999;
@@ -64,10 +64,10 @@ export default class Tile {
     //melhorar a leitura
 
     if (
-      this.new_x >= 0 &&
-      this.new_x <= this.cols &&
-      this.new_y >= 0 &&
-      this.new_y <= this.rows
+      this.relativeX >= 0 &&
+      this.relativeX <= this.cols &&
+      this.relativeY >= 0 &&
+      this.relativeY <= this.rows
     ) {
       this.drawShape();
     }
@@ -76,9 +76,9 @@ export default class Tile {
   drawShape() {
     // desenha o tile
     const p = this.#p;
-    const size = this.new_size;
-    const x = this.new_x;
-    const y = this.new_y;
+    const size = this.relativeSize;
+    const x = this.relativeX;
+    const y = this.relativeY;
     const gap = this.gap;
     const color = this.color;
 
@@ -89,18 +89,15 @@ export default class Tile {
     size > 0 && p.rect(x, y, size - gap, size - gap);
   }
 
-  setZoom(zoom) {
+  updatePosition(zoom, dx, dy) {
     this.zoom = zoom;
-    this.new_size = this.size * zoom;
-    this.new_x = this.x * zoom + this.dx;
-    this.new_y = this.y * zoom + this.dy;
-  }
+    this.dx = dx;
+    this.dy = dy;
+    this.relativeSize = this.size * zoom;
+    this.relativeX = this.x * zoom + this.dx;
+    this.relativeY = this.y * zoom + this.dy;
 
-  setDisplacement(dx, dy) {
-    (this.dx = dx), (this.dy = dy);
-
-    this.new_x = (this.x * this.zoom)  + this.dx;
-    this.new_y = (this.y  * this.zoom) + this.dy;
+    this.show();
   }
 
   setState(state) {
