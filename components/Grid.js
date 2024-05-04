@@ -5,8 +5,10 @@ export default class Grid {
     this.p = p;
     this.gridWidth = cols;
     this.gridHeight = rows;
+  
     this.cells = Array();
     this.activeCells = new Set();
+
 
     const cellConfigDefault = (x, y, index) => ({
       index: index,
@@ -14,6 +16,11 @@ export default class Grid {
       pos_j: y,
       size: 3,
       gap: 0,
+      zoom: 1,
+      dx: 0,
+      dy:0,
+      cols:500,
+      rows:500,
       stateList: [
         { key: 0, color: "black", value: 0 },
         { key: 1, color: "white", value: 1 },
@@ -23,6 +30,11 @@ export default class Grid {
     this.cellConfig = cellConfig ? cellConfig : cellConfigDefault;
     this.cellSize = this.cellConfig().size;
     this.stateList = this.cellConfig().stateList;
+    
+    this.zoom = this.cellConfig().zoom;
+    this.dx = this.cellConfig().dx;
+    this.dy = this.cellConfig().dy;
+  
   }
 
   initGrid() {
@@ -88,6 +100,7 @@ export default class Grid {
   selectCell(mx, my) {
     const [x, y] = this.#transformMouseToPosition(mx, my);
 
+
     if (this.#outOfBoundaries(x, y)) return;
 
     const index = this.#transformXandYtoIndex(x, y);
@@ -100,6 +113,22 @@ export default class Grid {
       this.cells[index].setState(this.stateList[1].key);
       this.activeCells.add(index);
     }
+  }
+
+  setZoom(zoom){
+    this.zoom = zoom;
+    this.cells.forEach((cell)=>{
+      cell.setZoom(zoom);
+      cell.show();
+    })
+  }
+  setDisplacement(dx,dy){
+    this.dx = dx;
+    this.dy = dy;
+    this.cells.forEach((cell)=>{
+      cell.setDisplacement(this.dx, this.dy);
+      cell.show();
+    })
   }
 
   getNeighborsIndex(index) {
@@ -129,8 +158,9 @@ export default class Grid {
   }
 
   #transformMouseToPosition(mx, my) {
-    let x = Math.floor(mx / this.cellSize);
-    let y = Math.floor(my / this.cellSize);
+    let x = (Math.floor((mx) / (this.cellSize*this.zoom ))) - this.dx/(this.cellSize * this.zoom);
+    let y = (Math.floor((my) / (this.cellSize*this.zoom))) - this.dy/(this.cellSize * this.zoom);
+console.log(x,y)
 
     return [x, y];
   }

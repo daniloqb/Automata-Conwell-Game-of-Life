@@ -8,9 +8,16 @@ export default class GameOfLife {
 
     this.sketch = function (p) {
       let pause = false;
-      const size = 3;
+      let zoom = 5;
+      let zoom_resolution = 2;
+      let displacement_resolution = 20;
+      let dx = 0;
+      let dy = 0;
+      const size = 1;
       const rows = p.windowHeight;
       const cols = p.windowWidth;
+      /*       const rows = 500;
+      const cols = 500; */
       const live = Symbol();
       const dead = Symbol();
       const zumbi = Symbol();
@@ -19,8 +26,13 @@ export default class GameOfLife {
         index: index,
         pos_i: x,
         pos_j: y,
+        rows: Math.floor(rows / size),
+        cols: Math.floor(cols / size),
         size,
         gap: 0,
+        zoom,
+        dx,
+        dy,
         stateList: [
           { key: dead, color: "blue", value: 0 },
           { key: live, color: "orange", value: 1 },
@@ -39,7 +51,7 @@ export default class GameOfLife {
         p.frameRate(10);
         p.createCanvas(cols, rows);
         p.noLoop();
-       p.background("gray");
+        p.background("gray");
         grid.initGrid();
       };
 
@@ -53,15 +65,57 @@ export default class GameOfLife {
       };
 
       p.keyPressed = function () {
-        if (p.key === "p") {
-          pause = !pause;
+        switch (p.keyCode) {
+          case 80: {
+            pause = !pause;
 
-          pause ? p.loop() : p.noLoop();
+            pause ? p.loop() : p.noLoop();
+            break;
+          }
+          case 32: {
+            !pause ? p.redraw() : null;
+            break;
+          }
+          case 107: {
+            zoom += zoom_resolution;
+            zoom %= 101;
+            grid.setZoom(zoom);
+            break;
+          }
+          case 109: {
+            zoom -= zoom_resolution;
+            if (zoom < 1) zoom = 1;
+
+            grid.setZoom(zoom);
+            break;
+          }
+          case 37: {
+            dx -= displacement_resolution;
+            if (dx < 0) dx = 0;
+            grid.setDisplacement(dx, dy);
+            break;
+          }
+          case 39: {
+            dx += displacement_resolution;
+            if (dx > p.windowWidth) dx = p.windowWidth;
+            grid.setDisplacement(dx, dy);
+            break;
+          }
+          case 38: {
+            dy -= displacement_resolution;
+            if (dy < 0) dy = 0;
+            grid.setDisplacement(dx, dy);
+            break;
+          }
+          case 40: {
+            dy += displacement_resolution;
+            if (dx > p.windowHeight) dy = p.windowHeight;
+            grid.setDisplacement(dx, dy);
+            break;
+          }
         }
 
-        if (p.keyCode == 32) {
-          !pause ? p.redraw() : null;
-        }
+        console.log(zoom, dx,dy)
       };
 
       p.applyRules = function (p) {
@@ -72,7 +126,7 @@ export default class GameOfLife {
           let aliveNeighborsCount = 0;
 
           for (const index of neighborsIndex) {
-            if (grid.getCellStatus(index) == live){
+            if (grid.getCellStatus(index) == live) {
               aliveNeighborsCount++;
             }
           }

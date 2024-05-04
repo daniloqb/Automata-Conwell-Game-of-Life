@@ -7,7 +7,12 @@ export default class Tile {
       pos_j = 0,
       size = 0,
       index = 0,
-      gap = 1,
+      gap = 0,
+      zoom = 1,
+      dx = 0,
+      dy = 0,
+      rows = 500,
+      cols = 500,
       stateList = [
         { key: 0, color: "blue", value: 0 },
         { key: 1, color: "orange", value: 1 },
@@ -23,6 +28,14 @@ export default class Tile {
     this.neighbors = [];
 
     this.size = size;
+    this.zoom = zoom;
+    this.dx = dx;
+    this.dy = dy;
+    this.rows = rows;
+    this.cols = cols;
+    this.new_x = this.x * this.zoom;
+    this.new_y = this.y * this.zoom;
+    this.new_size = this.size * this.zoom;
 
     this.state = 999;
     this.color = 999;
@@ -50,15 +63,22 @@ export default class Tile {
   show() {
     //melhorar a leitura
 
-    this.drawShape();
+    if (
+      this.new_x >= 0 &&
+      this.new_x <= this.cols &&
+      this.new_y >= 0 &&
+      this.new_y <= this.rows
+    ) {
+      this.drawShape();
+    }
   }
 
   drawShape() {
     // desenha o tile
     const p = this.#p;
-    const size = this.size;
-    const x = this.x;
-    const y = this.y;
+    const size = this.new_size;
+    const x = this.new_x;
+    const y = this.new_y;
     const gap = this.gap;
     const color = this.color;
 
@@ -66,7 +86,21 @@ export default class Tile {
 
     color ? p.fill(p.color(color)) : p.noFill();
 
-    size > 0 && p.rect(x, y, size-gap, size-gap);
+    size > 0 && p.rect(x, y, size - gap, size - gap);
+  }
+
+  setZoom(zoom) {
+    this.zoom = zoom;
+    this.new_size = this.size * zoom;
+    this.new_x = this.x * zoom + this.dx;
+    this.new_y = this.y * zoom + this.dy;
+  }
+
+  setDisplacement(dx, dy) {
+    (this.dx = dx), (this.dy = dy);
+
+    this.new_x = (this.x * this.zoom)  + this.dx;
+    this.new_y = (this.y  * this.zoom) + this.dy;
   }
 
   setState(state) {
