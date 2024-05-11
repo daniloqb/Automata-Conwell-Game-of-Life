@@ -180,13 +180,14 @@ export default class Grid {
     this.updatePosition(this.zoom, this.dx, dy);
   }
 
-  getNeighborsIndex(index) {
+  getNeighborsIndex(index, phi = 0) {
+    const level = Math.floor(2 * phi + 1);
     let neighbors = [];
     const [col, row] = this.#transformIndexToPosition(index);
 
-    for (let yOffset = -1; yOffset <= 1; yOffset++) {
+    for (let yOffset = -level; yOffset <= level; yOffset++) {
       let new_y = this.#wrapY(row + yOffset);
-      for (let xOffset = -1; xOffset <= 1; xOffset++) {
+      for (let xOffset = -level; xOffset <= level; xOffset++) {
         let new_x = this.#wrapX(col + xOffset);
 
         let neighborsIndex = this.#transformXandYtoIndex(new_x, new_y);
