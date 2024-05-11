@@ -98,7 +98,7 @@ export default class GameOfLife {
       p.fillGrid = function () {
         grid.cells.forEach((cell) => {
           let percentage = Math.random();
-          let state = Math.random() < percentage ? live : dead;
+          let state = Math.random() < 0 ? live : dead;
           cell.setState(state);
           let value = cell.getValue();
           if (value == 1) {
@@ -152,6 +152,7 @@ export default class GameOfLife {
           // seleciona uma célula da grid. passando como parâmetro as coordenadas do mouse
           // recebe de retorno o index da célula e se ela está ativa e na coleção de células ativas da grid
           let [index, found] = grid.selectCell(p.mouseX, p.mouseY);
+       
 
           // se retornou um índice válido
           if (index) {

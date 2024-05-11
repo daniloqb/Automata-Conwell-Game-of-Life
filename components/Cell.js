@@ -1,4 +1,4 @@
-export default class Tile {
+export default class Cell {
   #p;
 
   constructor(p, params = {}) {
@@ -60,7 +60,7 @@ export default class Tile {
   }
 
   drawShape(x, y, size) {
-    // desenha o tile
+    // desenha o Cell
     const p = this.#p;
     const gap = this.gap;
     const color = this.color;
