@@ -57,6 +57,29 @@ export default class GameOfLife {
       ];
 
       /*
+       *  LARGER THAN LIFE ESPECIFICATION
+       *  R -> o Range da vizinhança
+       *  B -> Condições de Birth
+       *  S -> Condições de Survival
+       *  C -> Número de estados da célula
+       * 
+       *  R1,C2,S2-3,B3 -> é a condição padrão de Game Of Life
+       *  R4,C2,S40-80,B41,81 -> Majority by David Griffeath -stable
+       *  R5,C2,S33-57,B34-45  -> Bosco rules - chaotic
+       *  R7,C2,S99-199,B75-170 -> Waffle by kellie Evans - expanding
+       *  R7,C2,S112-224,B113-225 -> Majorly by David Griffeath - expanding
+       *  R10,C2,S122-211,B123-170 -> BuggsMovie by David Griffeath - chaotic
+       *  R10,C255,S1-2,B3 -> ModernArt by Charles A. Rockafellor
+       *  R8,C2,S163-223,B74-252 -> Globe by Mirek Wojtowicz
+       *  http://www.mirekw.com/ca/rullex_lgtl.html
+       * https://conwaylife.com/
+       */
+
+      const range = 1;
+      const survival = [2,3];
+      const birth = [3,3];
+
+      /*
        * Define a configuração inicial de cada célula
        * Foi utilizado no estilo de função pois os valores de x,y e index serão calculados na criação.
        * Cada célula terá seu index, posição e os possíveis estados.
@@ -66,6 +89,7 @@ export default class GameOfLife {
         x,
         y,
         size,
+        range: range,
         gap: 0,
         stateList,
       });
@@ -98,7 +122,7 @@ export default class GameOfLife {
       p.fillGrid = function () {
         grid.cells.forEach((cell) => {
           let percentage = Math.random();
-          let state = Math.random() < 0 ? live : dead;
+          let state = Math.random() < percentage ? live : dead;
           cell.setState(state);
           let value = cell.getValue();
           if (value == 1) {
@@ -152,7 +176,6 @@ export default class GameOfLife {
           // seleciona uma célula da grid. passando como parâmetro as coordenadas do mouse
           // recebe de retorno o index da célula e se ela está ativa e na coleção de células ativas da grid
           let [index, found] = grid.selectCell(p.mouseX, p.mouseY);
-       
 
           // se retornou um índice válido
           if (index) {
@@ -317,7 +340,7 @@ export default class GameOfLife {
         const applyRulesForLiveCells = (neighborsCountCache) => {
           for (let index of neighborsCountCache.keys()) {
             let aliveNeighborsCount = neighborsCountCache.get(index);
-            if (aliveNeighborsCount < 2 || aliveNeighborsCount > 3) {
+            if (aliveNeighborsCount < survival[0] || aliveNeighborsCount > survival[1]) {
               grid.setCellState(index, dead);
             }
           }
@@ -329,7 +352,7 @@ export default class GameOfLife {
         ) => {
           for (let index of deadNeighborsToCheck) {
             let aliveNeighborsCount = neighborsCountCache.get(index);
-            if (aliveNeighborsCount === 3) {
+            if (aliveNeighborsCount >= birth[0] && aliveNeighborsCount <= birth[1]) {
               grid.setCellState(index, live);
               grid.addActiveCell(index);
             }

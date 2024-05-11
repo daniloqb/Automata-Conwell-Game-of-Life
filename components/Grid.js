@@ -4,7 +4,7 @@ export class ViewportGrid {
   constructor(rows, cols) {
     this.cols = cols;
     this.rows = rows;
-    this.zoom = 5;
+    this.zoom = 1;
     this.zoomResolution = 2;
     this.displacementResolution = 20;
     this.dx = 0;
@@ -123,6 +123,7 @@ export default class Grid {
       x,
       y,
       size: 3,
+      range: 1,
       stateList: [
         { key: 0, color: "black", value: 0 },
         { key: 1, color: "white", value: 1 },
@@ -135,6 +136,7 @@ export default class Grid {
 
     this.cellConfig = cellConfig ? cellConfig : cellConfigDefault;
     this.cellSize = this.cellConfig().size;
+    this.range = this.cellConfig().range;
   }
 
   /*
@@ -151,7 +153,7 @@ export default class Grid {
         let index = x + y * this.cols;
 
         this.cells.push(new Cell(this.p, this.cellConfig(x, y, index)));
-        let neighbors = this.getNeighborsIndex(index);
+        let neighbors = this.getNeighborsIndex(index, this.range);
         this.cells[index].setNeighbors(neighbors);
       }
     }
@@ -283,10 +285,11 @@ export default class Grid {
 
   /*
    * function getNeighborsIndex() -> função que retorna os índices de todos os vizinhos de uma célula
-   * usa PHI como nível de profundidade dos vizinhos da célula.
+   * usa range como nível de profundidade dos vizinhos da célula.
    */
-  getNeighborsIndex(index, phi = 0) {
-    const level = Math.floor(2 * phi + 1); // fórmula para identificar o nível. padrão é 1.
+  getNeighborsIndex(index, range = 1) {
+    //const level = Math.floor(2 * range + 1); // fórmula para identificar o nível. padrão é 1.
+    const level = range;
     let neighbors = [];
     const [col, row] = this.#transformIndexToPosition(index); // pega o index da célula atual e transforma em posições x e y
 
