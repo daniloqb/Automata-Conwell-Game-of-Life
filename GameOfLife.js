@@ -34,8 +34,9 @@ export default class GameOfLife {
       const size = 1; //tamanho padrão da célula
       const rows = p.windowHeight; //número de linhas de acordo com o tamanho visível da janela. Altura
       const cols = p.windowWidth; // número de colunas de acordo com o tamanho visível da janela. Largura
-      /*       const rows = 500;
-      const cols = 500; */
+      //let steps = 50;
+      //const rows = 400;
+      //const cols = 400;
 
       /*
        * Em Game of Life, as células possuem dois estados principais. live or dead
@@ -62,7 +63,7 @@ export default class GameOfLife {
        *  B -> Condições de Birth
        *  S -> Condições de Survival
        *  C -> Número de estados da célula
-       * 
+       *
        *  R1,C2,S2-3,B3 -> é a condição padrão de Game Of Life
        *  R4,C2,S40-80,B41,81 -> Majority by David Griffeath -stable
        *  R5,C2,S33-57,B34-45  -> Bosco rules - chaotic
@@ -73,6 +74,12 @@ export default class GameOfLife {
        *  R8,C2,S163-223,B74-252 -> Globe by Mirek Wojtowicz
        *  http://www.mirekw.com/ca/rullex_lgtl.html
        * https://conwaylife.com/
+       */
+
+      /*
+       * MAP CAVE-LIKE GENERATOR
+       * https://roguebasin.com/index.php/Cellular_Automata_Method_for_Generating_Random_Cave-Like_Levels
+       * R1,C2,S4-8,B5-8
        */
 
       const range = 1;
@@ -149,10 +156,15 @@ export default class GameOfLife {
       /*
        * Função principal de loop do P5.
        */
+
       p.draw = function () {
         //+  p.background("black");
         grid.updateGrid(); // atualiza as células da grid
+        this.applyRules();
+        /*        while (steps > 0){
         this.applyRules(); // aplica as regras do Game of Life
+        steps--;
+        } */
 
         p.checkKeysDown(); // verifica se existem teclas que estão apertadas
       };
@@ -340,7 +352,10 @@ export default class GameOfLife {
         const applyRulesForLiveCells = (neighborsCountCache) => {
           for (let index of neighborsCountCache.keys()) {
             let aliveNeighborsCount = neighborsCountCache.get(index);
-            if (aliveNeighborsCount < survival[0] || aliveNeighborsCount > survival[1]) {
+            if (
+              aliveNeighborsCount < survival[0] ||
+              aliveNeighborsCount > survival[1]
+            ) {
               grid.setCellState(index, dead);
             }
           }
@@ -352,7 +367,10 @@ export default class GameOfLife {
         ) => {
           for (let index of deadNeighborsToCheck) {
             let aliveNeighborsCount = neighborsCountCache.get(index);
-            if (aliveNeighborsCount >= birth[0] && aliveNeighborsCount <= birth[1]) {
+            if (
+              aliveNeighborsCount >= birth[0] &&
+              aliveNeighborsCount <= birth[1]
+            ) {
               grid.setCellState(index, live);
               grid.addActiveCell(index);
             }

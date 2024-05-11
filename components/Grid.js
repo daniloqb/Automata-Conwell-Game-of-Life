@@ -333,8 +333,10 @@ export default class Grid {
    */
 
   #transformMouseToPosition(mx, my) {
-    let x = Math.floor((mx - this.viewport.dx) / this.viewport.zoom);
-    let y = Math.floor((my - this.viewport.dy) / this.viewport.zoom);
+
+    let x = Math.floor(((mx - this.viewport.dx) / this.viewport.zoom)/this.cellSize);
+    let y = Math.floor(((my - this.viewport.dy) / this.viewport.zoom)/this.cellSize);
+    
     return [x, y];
   }
 
